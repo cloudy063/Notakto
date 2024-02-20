@@ -1,0 +1,331 @@
+Board_places = ['0', '1', '2', '3', '4', '5', '6', '7', '8']
+
+Board_names = ['A', 'B', 'C']
+
+firstBoard = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+
+secondBoard = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+
+thirdBoard = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+
+AllBoards = [firstBoard, secondBoard, thirdBoard]
+
+value = 65
+count = 0
+dead_board = 0  
+ProblemC = 0 #Comes into play when alpha=[A,C] so that C takes the index of 1.
+move = 0  
+firstmove = 0  # first move of AI determined by it
+location = 0
+position = 0
+trip = True
+Humanlocation = 0
+ 
+
+#keep the game going
+def game():
+  board()
+  while dead_board < 3:
+
+    index()
+    player()
+
+
+#update board as the game goes
+def index():
+  global value
+
+  if Board_names == ['B', 'C']:
+    value = 66
+
+  elif Board_names == ['C']:
+    value = 67
+    
+  elif Board_names == ['B']:
+    value = 66
+
+
+def board():  #threeboards are alive
+  print('A      B      C')
+  print(*firstBoard[:3], '', *secondBoard[:3], '', *thirdBoard[:3])
+  print(
+    *firstBoard[3:6],
+    '',
+    *secondBoard[3:6],
+    '',
+    *thirdBoard[3:6],
+  )
+  print(*firstBoard[6:], '', *secondBoard[6:], '', *thirdBoard[6:])
+
+
+def twoboardsleft(X, Y):  #twoboards are alive
+  print(X,'    ', Y)
+  print(*AllBoards[0][:3], '', *AllBoards[1][:3])
+  print(*AllBoards[0][3:6], '', *AllBoards[1][3:6])
+  print(*AllBoards[0][6:], '', *AllBoards[1][6:])
+
+
+def oneboardleft(Y):  #one board is alive.
+  print(Y)
+  print(*AllBoards[0][:3])
+  print(*AllBoards[0][3:6])
+  print(*AllBoards[0][6:])
+
+
+#player properties
+def player():
+  global count
+  global value
+  global ProblemC
+  global move
+  global location
+  global position
+
+  while True:
+    if count == 0:
+      move = AIplayer()
+      print('Player 1:', move)
+      move_given_by = 'Player 1'
+      winner = 'Player 2'
+    else:
+      move = input('Player 2: ')
+      move_given_by = 'Player 2'
+      winner = 'Player 1'
+
+    if len(move) != 2:
+      print('Invalid move, please input again')
+    else:
+      location, position = move
+      if Board_names == ['A', 'C'] and location == 'C':
+        ProblemC = 1
+        
+      if Board_names == ['A', 'C'] and location == 'A':
+        ProblemC = 0
+        
+      if count == 0:
+        break
+      else:
+        if (position in Board_places) and (location in Board_names) and (
+            AllBoards[ord(location) - value - ProblemC][int(position)]) != 'X':
+          break
+        else:
+          print('Invalid move, please input again')
+  AllBoards[ord(location) - value - ProblemC][int(position)] = 'X'
+
+  if move_given_by == 'Player 1':
+    count = 1
+  else:
+    count = 0
+  checkboard(ord(location) - value - ProblemC, location, winner)
+
+
+def checkboard(j, h, s):  # Determines which board is dead
+  global dead_board
+  global value
+
+  if AllBoards[j][:3].count('X') == 3 or AllBoards[j][3:6].count(
+      'X') == 3 or AllBoards[j][6:].count('X') == 3:
+    dead_board += 1
+    del AllBoards[j]
+    Board_names.remove(h)
+
+  elif AllBoards[j][:7:3].count('X') == 3 or AllBoards[j][1:8:3].count(
+      'X') == 3 or AllBoards[j][2:9:3].count('X') == 3:
+    dead_board += 1
+    del AllBoards[j]
+    Board_names.remove(h)
+
+  elif AllBoards[j][:9:4].count('X') == 3 or AllBoards[j][2:7:2].count(
+      'X') == 3:
+    dead_board += 1
+    del AllBoards[j]
+    Board_names.remove(h)
+
+  if dead_board != 3:
+    display()
+  if dead_board == 3:
+    print(s, 'wins game')
+
+
+def display():  # Displays of dead boards
+  global dead_board
+  if dead_board == 0:
+    firstBoard, secondBoard, thirdBoard = AllBoards
+    board()
+  elif dead_board == 1:
+    twoboardsleft(Board_names[0], Board_names[1])
+  elif dead_board == 2:
+    oneboardleft(Board_names[0])
+
+
+def AIplayer():  # Move given by my AI
+  global firstmove
+  global value
+  global location
+  global ProblemC
+  global dead_board
+  global trip
+  global Humanlocation
+
+  if firstmove == 0:  # First move given by AI
+    strategy = 'A4'
+    firstmove += 1
+    return strategy
+  else:
+    if location == 'B' and trip == True:
+      strategy = 'C4'
+      trip = False
+      Humanlocation = 'C'
+      return strategy
+
+    elif location == 'C' and trip == True:  #That is if player2 plays first move on C happens when NO X on board
+      strategy = 'B4'
+      trip = False
+      Humanlocation = "B"
+      return strategy
+
+    if len(
+        AllBoards) == 2 and AllBoards[0][4] == 'X' and AllBoards[1][4] == 'X':
+      strategy = location + str(sacrifice(ord(location) - value - ProblemC))
+      return strategy
+
+    elif dead_board == 2 and AllBoards[0][
+        4] == 'X':  # That is if player2 plays first move on A
+      strategy = location + str(trap(ord(location) - value - ProblemC))
+      return strategy
+
+    if len(AllBoards) == 2 and AllBoards[
+        ord(location) - value -
+        ProblemC][4] == 'X' and AllBoards[0][4] != AllBoards[1][4]:
+      strategy = location + str(trap(ord(location) - value - ProblemC))
+      return strategy
+
+    elif dead_board == 1 and AllBoards[ord(location) - value - ProblemC][4] == 'X' and (
+        AllBoards[0][4] != 'X'
+        or AllBoards[1][4] != 'X') and AllBoards.count('X') > 1:
+      strategy = location + str(trap(ord(location) - value - ProblemC))
+      return strategy
+
+    elif dead_board == 2 and Humanlocation in AllBoards and AllBoards[0][
+        4] == 'X' and AllBoards[1][4] == 'X':
+
+      strategy = location + str(sacrifice(ord(location) - value - ProblemC))
+      return strategy
+
+    elif location == Humanlocation and Humanlocation in AllBoards and dead_board == 1:
+      strategy = location + str(trap(ord(location) - value - ProblemC))
+      return strategy
+
+    elif Humanlocation not in AllBoards and dead_board == 2:
+      strategy = AllBoards[0] + str(attacked(0))
+      return strategy
+
+    elif dead_board != 2 and AllBoards[ord(location) - value - ProblemC].count('X') > 1:
+
+      strategy = location + str(sacrifice(ord(location) - value - ProblemC))
+      if str(sacrifice(ord(location) - value - ProblemC)) in Board_places:
+        return strategy
+
+      else:
+        strategy = location + str(complex2X(ord(location) - value - ProblemC))
+        return strategy
+
+
+#strategy for the AI to make moves where the board has an X on it
+def sacrifice(j):
+  score = 0
+  for i in range(9):
+    if AllBoards[j][i] != 'X':
+      AllBoards[j][i] = 'X'
+      if AllBoards[j][:3].count('X') == 3 or AllBoards[j][3:6].count(
+          'X') == 3 or AllBoards[j][6:].count('X') == 3:
+        break
+      elif AllBoards[j][:7:3].count('X') == 3 or AllBoards[j][1:8:3].count(
+          'X') == 3 or AllBoards[j][2:9:3].count('X') == 3:
+        break
+      elif AllBoards[j][:9:4].count('X') == 3 or AllBoards[j][2:7:2].count(
+          'X') == 3:
+        break
+      else:
+        AllBoards[j][i] = i
+        score += 1
+  if score != 7:
+    return i
+  else:
+    return complex2X(j)
+
+
+def complex2X(j):  # AI cant be killed simply so have to apply the 2X method
+  global position
+  options = [[0, 5, 7], [1, 5, 6], [2, 3, 7], [3, 1, 8], [99], [5, 1, 6],
+             [6, 1, 5], [7, 0, 5], [8, 1, 3]]
+  for index in options:
+    if int(position) in index:
+      record = []
+      for i in index:
+        record.append(str(AllBoards[j][i]))
+      if record.count('X') == 2:
+
+        for i in record:
+          if i in Board_places:
+            AllBoards[j][int(i)] = 'X'
+            return i
+            break
+
+
+#AI runs trap move to basically secure the win
+def trap(j):
+  global position
+  combo = [[5, 7], [6, 8], [7, 3], [2, 8], [9999], [0, 6], [1, 5],
+                 [0, 2], [1, 3]]
+  for index in combo:
+    if combo.index(index) == int(position) and combo.index(index) != 4:
+      for i in index:
+        if AllBoards[j][i] != 'X':
+          AllBoards[j][i] = 'X'
+          status = boardstatus(ord(location) - value - ProblemC)
+          if status == 'alive':
+            return i
+            break
+          else:
+            AllBoards[j][i] = i
+
+#AI attacked where it retaliates
+def attacked(j):
+  option = [[0, 8], [2, 6], [3, 5], [1, 7]]
+  option2 = [1, 3, 5, 7]
+
+  for index in option:
+    if AllBoards[j][index[0]] == 'X' and AllBoards[j][index[1]] != 'X':
+
+      AllBoards[j][index[1]] == 'X'
+      return index[1]
+      break
+    elif AllBoards[j][index[1]] == 'X' and AllBoards[j][index[0]] != 'X':
+      AllBoards[j][index[0]] == 'X'
+      return index[0]
+      break
+
+  if AllBoards[j].count('X') == 5:
+    for i in option2:
+      if AllBoards[j][i] != 'X':
+        AllBoards[j][i] == 'X'
+        return i
+
+
+#keeps track on which boards are alive in the game
+def boardstatus(j):
+  status = 'alive'
+  if AllBoards[j][:3].count('X') == 3 or AllBoards[j][3:6].count(
+      'X') == 3 or AllBoards[j][6:].count('X') == 3:
+    status = 'dead'
+  elif AllBoards[j][:7:3].count('X') == 3 or AllBoards[j][1:8:3].count(
+      'X') == 3 or AllBoards[j][2:9:3].count('X') == 3:
+    status = 'dead'
+  elif AllBoards[j][:9:4].count('X') == 3 or AllBoards[j][2:7:2].count(
+      'X') == 3:
+    status = 'dead'
+  return status
+
+
+game()
